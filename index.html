@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game</title>
+    <!-- Include chessboard.js -->
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <style>
+        #board1 {
+            float: left;
+            padding-top: 8vh;
+            padding-left: 8vh;
+            width: 80vh;
+            height: 80 vh;
+            margin-right: 20px; 
+        }
+        #output {
+            background-color: rgb(250, 243, 235);
+            width: 40vw; 
+            height: 70vh;
+            float: left; 
+            margin-top: 8vh;
+            padding-top: 8vh;
+            padding-right: 5vh;
+            font-size: 2em;
+            font-family: "DM Sans", sans-serif;
+            margin-left: 5vh;
+            padding-left: 7vh;
+            align-self: center;
+            overflow-y: auto;
+            border-width:3px; border-style:solid; border-color:black; 
+        }
+        h1{
+            font-family: "DM Sans", sans-serif;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>    
+    <div id="board1"></div>
+    <p id="output"> The game is currently is at its starting position with the all the pieces set up.</p>
+    <script type="importmap">
+        {
+            "imports": {
+            "@google/generative-ai": "https://esm.run/@google/generative-ai"
+            }
+        }
+    </script>
+    <script type="module">
+        var board = null
+        var game = new Chess()
+
+        function onDragStart (source, piece, position, orientation) {
+        if (game.game_over()) return false
+        if (piece.search(/^b/) !== -1) return false
+        }
+
+        function makeRandomMove () {
+            var possibleMoves = game.moves()
+            if (possibleMoves.length === 0) return
+            var randomIdx = Math.floor(Math.random() * possibleMoves.length)
+            game.move(possibleMoves[randomIdx])
+            board.position(game.fen())
+        }
+        function convertMovesToString(moves) {
+            let result = '';
+            for (let i = 0; i < moves.length; i++) {
+                if (i % 2 === 0) {
+                    result += `${Math.floor(i / 2) + 1}. ${moves[i]} `;
+                } else {
+                    result += `${moves[i]} `;
+                }
+            }
+            return result.trim();
+        }
+
+
+        function onDrop (source, target) {
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            })
+            if (move === null) return 'snapback'
+            console.log("Explain this chess game"+convertMovesToString(game.history()))
+            run("Explain the last move :"+convertMovesToString(game.history()));
+            window.setTimeout(makeRandomMove, 250)
+        }
+
+        function onSnapEnd () {
+        board.position(game.fen())
+        }
+
+        var config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        }
+        var board = Chessboard('board1', config)
+
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+        const API_KEY = "AIzaSyChBVt6lS5ySWEC1Nz0ZkA_Ez_8q7PbfMY";
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        function formatText(text) {
+            text = text.replace(/\*\*(.*?)\*\*/g, '<br/><b>$1</b>');
+            text = text.replace(/\*/g, '<br/>');
+            return text;
+        }
+        async function run(prompt) {
+            const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = formatText(response.text());
+            console.log(text);
+            document.getElementById("output").innerHTML = text;
+        }
+
+        
+ 
+    </script>
+</body>
+</html>
