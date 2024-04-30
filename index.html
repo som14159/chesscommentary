@@ -108,7 +108,7 @@
         var board = Chessboard('board1', config)
 
         import { GoogleGenerativeAI } from "@google/generative-ai";
-        const API_KEY = "AIzaSyChBVt6lS5ySWEC1Nz0ZkA_Ez_8q7PbfMY";
+        const API_KEY = "";
         const genAI = new GoogleGenerativeAI(API_KEY);
         function formatText(text) {
             text = text.replace(/\*\*(.*?)\*\*/g, '<br/><b>$1</b>');
